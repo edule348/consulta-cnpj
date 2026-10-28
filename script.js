@@ -219,12 +219,14 @@ function exibirInscricaoEstadual(dados) {
 
   const situacaoIE = document.getElementById("situacao-ie");
 
-  situacaoIE.style.color =
-    ativa === true
-      ? "#15803d"
-      : ativa === false
-        ? "#dc2626"
-        : "#475569";
+  if (situacaoIE) {
+    situacaoIE.style.color =
+      ativa === true
+        ? "#15803d"
+        : ativa === false
+          ? "#dc2626"
+          : "#475569";
+  }
 
   mostrarMensagemIE(
     inscricoes.length > 1
@@ -362,10 +364,6 @@ limpar.addEventListener("click", () => {
 
 campo.addEventListener("keydown", evento => {
   if (evento.key === "Enter") {
-    pesquisar.click();
-  }
-});
-
     pesquisar.click();
   }
 });
