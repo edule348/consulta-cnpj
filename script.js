@@ -6,9 +6,16 @@ const mensagem = document.getElementById("mensagem");
 const resultado = document.getElementById("resultado");
 const secundarios = document.getElementById("secundarios");
 
+const pesquisarIE = document.getElementById("pesquisar-ie");
+const mensagemIE = document.getElementById("mensagem-ie");
+const resultadoIE = document.getElementById("resultado-ie");
+const listaIE = document.getElementById("lista-ie");
+
 const API_IE = "https://consulta-cnpj-api-hbov.onrender.com/api/ie";
 
-let consultaAtual = null;
+let controladorCNPJ = null;
+let controladorIE = null;
+let cnpjConsultado = "";
 
 function somenteDigitos(valor) {
   return String(valor || "").replace(/\D/g, "");
@@ -24,8 +31,8 @@ function formatarCNPJ(valor) {
     .replace(/(\d{4})(\d)/, "$1-$2");
 }
 
-function validarCNPJ(cnpj) {
-  const n = somenteDigitos(cnpj);
+function validarCNPJ(valor) {
+  const n = somenteDigitos(valor);
 
   if (!/^\d{14}$/.test(n) || /^(\d)\1+$/.test(n)) {
     return false;
@@ -76,32 +83,42 @@ function mostrarMensagem(texto, cor = "#475569") {
 }
 
 function mostrarMensagemIE(texto, cor = "#475569") {
-  const elemento = document.getElementById("mensagem-ie");
+  mensagemIE.textContent = texto;
+  mensagemIE.style.color = cor;
+}
 
-  if (!elemento) return;
+function cancelarConsultas() {
+  if (controladorCNPJ) {
+    controladorCNPJ.abort();
+    controladorCNPJ = null;
+  }
 
-  elemento.textContent = texto;
-  elemento.style.color = cor;
+  if (controladorIE) {
+    controladorIE.abort();
+    controladorIE = null;
+  }
+
+  pesquisar.disabled = false;
+  pesquisar.textContent = "Pesquisar";
+
+  pesquisarIE.disabled = false;
+  pesquisarIE.textContent = "Consultar Inscrição Estadual (IE)";
 }
 
 function limparResultado() {
   resultado.hidden = true;
+  cnpjConsultado = "";
 
   resultado.querySelectorAll("p").forEach(elemento => {
     elemento.textContent = "";
   });
 
   secundarios.replaceChildren();
-}
+  listaIE.replaceChildren();
 
-function cancelarConsulta() {
-  if (consultaAtual) {
-    consultaAtual.abort();
-    consultaAtual = null;
-  }
-
-  pesquisar.disabled = false;
-  pesquisar.textContent = "Pesquisar";
+  resultadoIE.hidden = true;
+  pesquisarIE.disabled = false;
+  pesquisarIE.textContent = "Consultar Inscrição Estadual (IE)";
 }
 
 function formatarData(valor) {
@@ -124,9 +141,9 @@ function formatarData(valor) {
 function exibirDados(dados) {
   preencher(
     "tipo",
-    dados.identificador_matriz_filial === 1
+    Number(dados.identificador_matriz_filial) === 1
       ? "Matriz"
-      : dados.identificador_matriz_filial === 2
+      : Number(dados.identificador_matriz_filial) === 2
         ? "Filial"
         : "Não informado"
   );
@@ -154,8 +171,10 @@ function exibirDados(dados) {
   } else {
     atividades.forEach(atividade => {
       const li = document.createElement("li");
+
       li.textContent =
-        `${atividade.codigo} - ${atividade.descricao}`;
+        `${atividade.codigo || ""} - ${atividade.descricao || ""}`;
+
       secundarios.appendChild(li);
     });
   }
@@ -169,6 +188,7 @@ function exibirDados(dados) {
   preencher("uf", dados.uf);
 
   const situacao = document.getElementById("situacao");
+
   const status = String(
     dados.descricao_situacao_cadastral || ""
   ).toUpperCase();
@@ -181,107 +201,137 @@ function exibirDados(dados) {
         : "#b45309";
 
   resultado.hidden = false;
+  resultadoIE.hidden = true;
+
+  mostrarMensagemIE(
+    "Clique no botão para consultar a Inscrição Estadual."
+  );
 }
 
-function exibirInscricaoEstadual(dados) {
+function criarCampoIE(rotulo, valor, cor = "") {
+  const div = document.createElement("div");
+  const label = document.createElement("label");
+  const p = document.createElement("p");
+
+  label.textContent = rotulo;
+
+  p.textContent =
+    valor === null ||
+    valor === undefined ||
+    String(valor).trim() === ""
+      ? "Não informado"
+      : String(valor);
+
+  if (cor) {
+    p.style.color = cor;
+  }
+
+  div.append(label, p);
+
+  return div;
+}
+
+function exibirInscricoesEstaduais(dados) {
   const inscricoes = Array.isArray(dados.inscricoes_estaduais)
     ? dados.inscricoes_estaduais
     : [];
 
+  listaIE.replaceChildren();
+
   if (inscricoes.length === 0) {
+    resultadoIE.hidden = true;
+
     mostrarMensagemIE(
-      "Nenhuma inscrição estadual encontrada na base consultada.",
+      "Nenhuma Inscrição Estadual encontrada na base consultada.",
       "#b45309"
     );
+
     return;
   }
 
-  const inscricao = inscricoes[0];
+  inscricoes.forEach((inscricao, indice) => {
+    const bloco = document.createElement("div");
+    const titulo = document.createElement("h4");
+    const grade = document.createElement("div");
 
-  preencher("inscricao-estadual", inscricao.inscricao_estadual);
-  preencher("uf-ie", inscricao.uf);
+    titulo.textContent = `Inscrição Estadual ${indice + 1}`;
+    grade.className = "dados";
 
-  const ativa = inscricao.ativo;
+    const situacao =
+      inscricao.ativo === true
+        ? "Ativa"
+        : inscricao.ativo === false
+          ? "Inativa"
+          : "Não informado";
 
-  preencher(
-    "situacao-ie",
-    ativa === true
-      ? "Ativa"
-      : ativa === false
-        ? "Inativa"
-        : "Não informado"
-  );
-
-  preencher(
-    "atualizacao-ie",
-    formatarData(inscricao.atualizado_em)
-  );
-
-  const situacaoIE = document.getElementById("situacao-ie");
-
-  if (situacaoIE) {
-    situacaoIE.style.color =
-      ativa === true
+    const cor =
+      inscricao.ativo === true
         ? "#15803d"
-        : ativa === false
+        : inscricao.ativo === false
           ? "#dc2626"
           : "#475569";
-  }
+
+    grade.appendChild(
+      criarCampoIE(
+        "Número da Inscrição Estadual",
+        inscricao.inscricao_estadual
+      )
+    );
+
+    grade.appendChild(
+      criarCampoIE(
+        "UF da Inscrição Estadual",
+        inscricao.uf
+      )
+    );
+
+    grade.appendChild(
+      criarCampoIE(
+        "Situação da Inscrição Estadual",
+        situacao,
+        cor
+      )
+    );
+
+    grade.appendChild(
+      criarCampoIE(
+        "Última atualização",
+        formatarData(inscricao.atualizado_em)
+      )
+    );
+
+    bloco.append(titulo, grade);
+
+    if (indice < inscricoes.length - 1) {
+      bloco.appendChild(document.createElement("hr"));
+    }
+
+    listaIE.appendChild(bloco);
+  });
+
+  resultadoIE.hidden = false;
 
   mostrarMensagemIE(
-    inscricoes.length > 1
-      ? `Consulta realizada. Foram encontradas ${inscricoes.length} inscrições estaduais; exibindo a primeira.`
-      : "Inscrição Estadual consultada com sucesso!",
+    `${inscricoes.length} inscrição(ões) estadual(is) encontrada(s).`,
     "#15803d"
   );
 }
 
-async function consultarInscricaoEstadual(cnpj, controlador) {
-  mostrarMensagemIE("Consultando Inscrição Estadual...");
-
-  try {
-    const resposta = await fetch(
-      `${API_IE}?cnpj=${encodeURIComponent(cnpj)}`,
-      { signal: controlador.signal }
-    );
-
-    if (!resposta.ok) {
-      throw new Error(
-        `Não foi possível consultar a Inscrição Estadual (HTTP ${resposta.status}).`
-      );
-    }
-
-    const dados = await resposta.json();
-
-    if (consultaAtual !== controlador) return;
-
-    exibirInscricaoEstadual(dados);
-  } catch (erro) {
-    if (
-      erro.name !== "AbortError" &&
-      consultaAtual === controlador
-    ) {
-      mostrarMensagemIE(
-        erro instanceof TypeError
-          ? "Não foi possível conectar ao servidor de Inscrição Estadual."
-          : erro.message,
-        "#dc2626"
-      );
-    }
-  }
-}
+// CONSULTA PRINCIPAL DO CNPJ
 
 campo.addEventListener("input", () => {
   campo.value = formatarCNPJ(campo.value);
-  cancelarConsulta();
+
+  cancelarConsultas();
   limparResultado();
+
   mostrarMensagem("");
 });
 
 pesquisar.addEventListener("click", async () => {
   const cnpj = somenteDigitos(campo.value);
 
-  cancelarConsulta();
+  cancelarConsultas();
   limparResultado();
 
   if (!validarCNPJ(cnpj)) {
@@ -290,7 +340,7 @@ pesquisar.addEventListener("click", async () => {
   }
 
   const controlador = new AbortController();
-  consultaAtual = controlador;
+  controladorCNPJ = controlador;
 
   pesquisar.disabled = true;
   pesquisar.textContent = "Consultando...";
@@ -323,7 +373,9 @@ pesquisar.addEventListener("click", async () => {
 
     const dados = await resposta.json();
 
-    if (consultaAtual !== controlador) return;
+    if (controladorCNPJ !== controlador) return;
+
+    cnpjConsultado = cnpj;
 
     exibirDados(dados);
 
@@ -332,11 +384,10 @@ pesquisar.addEventListener("click", async () => {
       "#15803d"
     );
 
-    await consultarInscricaoEstadual(cnpj, controlador);
   } catch (erro) {
     if (
       erro.name !== "AbortError" &&
-      consultaAtual === controlador
+      controladorCNPJ === controlador
     ) {
       mostrarMensagem(
         erro instanceof TypeError
@@ -346,21 +397,96 @@ pesquisar.addEventListener("click", async () => {
       );
     }
   } finally {
-    if (consultaAtual === controlador) {
-      consultaAtual = null;
+    if (controladorCNPJ === controlador) {
+      controladorCNPJ = null;
       pesquisar.disabled = false;
       pesquisar.textContent = "Pesquisar";
     }
   }
 });
 
+// CONSULTA OPCIONAL DA INSCRIÇÃO ESTADUAL
+
+pesquisarIE.addEventListener("click", async () => {
+  if (!cnpjConsultado) {
+    mostrarMensagemIE(
+      "Primeiro consulte um CNPJ válido.",
+      "#dc2626"
+    );
+    return;
+  }
+
+  if (controladorIE) {
+    controladorIE.abort();
+  }
+
+  const controlador = new AbortController();
+  controladorIE = controlador;
+
+  resultadoIE.hidden = true;
+  listaIE.replaceChildren();
+
+  pesquisarIE.disabled = true;
+  pesquisarIE.textContent = "Consultando IE...";
+
+  mostrarMensagemIE(
+    "Buscando inscrições estaduais. Aguarde..."
+  );
+
+  try {
+    const resposta = await fetch(
+      `${API_IE}?cnpj=${encodeURIComponent(cnpjConsultado)}`,
+      { signal: controlador.signal }
+    );
+
+    if (!resposta.ok) {
+      throw new Error(
+        `Não foi possível consultar a IE (HTTP ${resposta.status}).`
+      );
+    }
+
+    const dados = await resposta.json();
+
+    if (controladorIE !== controlador) return;
+
+    exibirInscricoesEstaduais(dados);
+
+  } catch (erro) {
+    if (
+      erro.name !== "AbortError" &&
+      controladorIE === controlador
+    ) {
+      mostrarMensagemIE(
+        erro instanceof TypeError
+          ? "Não foi possível conectar ao servidor de Inscrição Estadual."
+          : erro.message,
+        "#dc2626"
+      );
+    }
+  } finally {
+    if (controladorIE === controlador) {
+      controladorIE = null;
+
+      pesquisarIE.disabled = false;
+      pesquisarIE.textContent =
+        "Consultar Inscrição Estadual (IE)";
+    }
+  }
+});
+
+// BOTÃO LIMPAR
+
 limpar.addEventListener("click", () => {
-  cancelarConsulta();
-  campo.value = "";
+  cancelarConsultas();
   limparResultado();
+
+  campo.value = "";
+
   mostrarMensagem("");
   campo.focus();
 });
+
+// PESQUISAR COM ENTER
 
 campo.addEventListener("keydown", evento => {
   if (evento.key === "Enter") {
