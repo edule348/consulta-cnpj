@@ -4,19 +4,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Consulta CNPJ</title>
+
   <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
 </head>
+
 <body>
   <main class="container">
+
     <header>
       <h1>Consulta CNPJ</h1>
       <p>Consulta de dados cadastrais de empresas</p>
     </header>
 
+    <!-- PESQUISA DE CNPJ -->
     <section class="painel">
       <label for="cnpj">CNPJ da empresa</label>
+
       <div class="pesquisa">
         <input
           id="cnpj"
@@ -24,108 +30,158 @@
           placeholder="00.000.000/0000-00"
           maxlength="18"
           inputmode="numeric"
+          autocomplete="off"
         >
+
         <button id="pesquisar" type="button">
           Pesquisar
         </button>
+
         <button id="limpar" type="button">
           Limpar
         </button>
       </div>
-      <p id="mensagem" role="status" aria-live="polite"></p>
+
+      <p
+        id="mensagem"
+        role="status"
+        aria-live="polite"
+      ></p>
     </section>
 
+    <!-- RESULTADO DA CONSULTA -->
     <section id="resultado" class="painel" hidden>
+
       <h2>Dados cadastrais</h2>
 
       <div class="dados">
+
         <div>
           <label>Tipo de estabelecimento</label>
           <p id="tipo"></p>
         </div>
+
         <div>
           <label>Situação cadastral</label>
           <p id="situacao"></p>
         </div>
+
         <div>
-          <label>Nome empresarial</label>
+          <label>Nome empresarial (Razão Social)</label>
           <p id="razao"></p>
         </div>
+
         <div>
           <label>Nome fantasia</label>
           <p id="fantasia"></p>
         </div>
+
       </div>
 
-      <h2>Inscrição Estadual</h2>
-      <p id="mensagem-ie" role="status" aria-live="polite"></p>
-
-      <div class="dados">
-        <div>
-          <label>Inscrição Estadual (IE)</label>
-          <p id="inscricao-estadual"></p>
-        </div>
-        <div>
-          <label>UF da inscrição</label>
-          <p id="uf-ie"></p>
-        </div>
-        <div>
-          <label>Situação da inscrição</label>
-          <p id="situacao-ie"></p>
-        </div>
-        <div>
-          <label>Última atualização</label>
-          <p id="atualizacao-ie"></p>
-        </div>
-      </div>
-
+      <!-- ATIVIDADES ECONÔMICAS -->
       <h2>Atividades econômicas</h2>
 
       <div class="dados">
+
         <div>
           <label>CNAE principal</label>
           <p id="principal"></p>
         </div>
+
         <div>
           <label>CNAEs secundários</label>
           <ul id="secundarios"></ul>
         </div>
+
       </div>
 
+      <!-- ENDEREÇO -->
       <h2>Endereço</h2>
 
       <div class="dados">
+
         <div>
           <label>Logradouro</label>
           <p id="logradouro"></p>
         </div>
+
         <div>
           <label>Número</label>
           <p id="numero"></p>
         </div>
+
         <div>
           <label>Complemento</label>
           <p id="complemento"></p>
         </div>
+
         <div>
           <label>CEP</label>
           <p id="cep"></p>
         </div>
+
         <div>
           <label>Bairro / Distrito</label>
           <p id="bairro"></p>
         </div>
+
         <div>
           <label>Município</label>
           <p id="municipio"></p>
         </div>
+
         <div>
           <label>UF</label>
           <p id="uf"></p>
         </div>
+
       </div>
+
+      <!-- INSCRIÇÃO ESTADUAL -->
+      <h2>Inscrição Estadual (IE)</h2>
+
+      <p
+        id="mensagem-ie"
+        role="status"
+        aria-live="polite"
+      >
+        Aguardando consulta da Inscrição Estadual...
+      </p>
+
+      <div class="dados">
+
+        <div>
+          <label>Número da Inscrição Estadual</label>
+          <p id="inscricao-estadual">
+            Não consultado
+          </p>
+        </div>
+
+        <div>
+          <label>UF da Inscrição Estadual</label>
+          <p id="uf-ie">
+            Não consultado
+          </p>
+        </div>
+
+        <div>
+          <label>Situação da Inscrição Estadual</label>
+          <p id="situacao-ie">
+            Não consultado
+          </p>
+        </div>
+
+        <div>
+          <label>Última atualização</label>
+          <p id="atualizacao-ie">
+            Não consultado
+          </p>
+        </div>
+
+      </div>
+
     </section>
+
   </main>
 </body>
 </html>
-
