@@ -18,9 +18,13 @@
     <section class="painel">
       <label for="cnpj">CNPJ da empresa</label>
       <div class="pesquisa">
-        <input id="cnpj" type="text"
+        <input
+          id="cnpj"
+          type="text"
           placeholder="00.000.000/0000-00"
-          maxlength="18" inputmode="numeric">
+          maxlength="18"
+          inputmode="numeric"
+        >
         <button id="pesquisar" type="button">
           Pesquisar
         </button>
@@ -53,7 +57,30 @@
         </div>
       </div>
 
+      <h2>Inscrição Estadual</h2>
+      <p id="mensagem-ie" role="status" aria-live="polite"></p>
+
+      <div class="dados">
+        <div>
+          <label>Inscrição Estadual (IE)</label>
+          <p id="inscricao-estadual"></p>
+        </div>
+        <div>
+          <label>UF da inscrição</label>
+          <p id="uf-ie"></p>
+        </div>
+        <div>
+          <label>Situação da inscrição</label>
+          <p id="situacao-ie"></p>
+        </div>
+        <div>
+          <label>Última atualização</label>
+          <p id="atualizacao-ie"></p>
+        </div>
+      </div>
+
       <h2>Atividades econômicas</h2>
+
       <div class="dados">
         <div>
           <label>CNAE principal</label>
@@ -66,16 +93,39 @@
       </div>
 
       <h2>Endereço</h2>
+
       <div class="dados">
-        <div><label>Logradouro</label><p id="logradouro"></p></div>
-        <div><label>Número</label><p id="numero"></p></div>
-        <div><label>Complemento</label><p id="complemento"></p></div>
-        <div><label>CEP</label><p id="cep"></p></div>
-        <div><label>Bairro / Distrito</label><p id="bairro"></p></div>
-        <div><label>Município</label><p id="municipio"></p></div>
-        <div><label>UF</label><p id="uf"></p></div>
+        <div>
+          <label>Logradouro</label>
+          <p id="logradouro"></p>
+        </div>
+        <div>
+          <label>Número</label>
+          <p id="numero"></p>
+        </div>
+        <div>
+          <label>Complemento</label>
+          <p id="complemento"></p>
+        </div>
+        <div>
+          <label>CEP</label>
+          <p id="cep"></p>
+        </div>
+        <div>
+          <label>Bairro / Distrito</label>
+          <p id="bairro"></p>
+        </div>
+        <div>
+          <label>Município</label>
+          <p id="municipio"></p>
+        </div>
+        <div>
+          <label>UF</label>
+          <p id="uf"></p>
+        </div>
       </div>
     </section>
   </main>
 </body>
 </html>
+
