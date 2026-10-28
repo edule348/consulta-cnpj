@@ -6,10 +6,12 @@ const mensagem = document.getElementById("mensagem");
 const resultado = document.getElementById("resultado");
 const secundarios = document.getElementById("secundarios");
 
+const API_IE = "https://consulta-cnpj-api-hbov.onrender.com/api/ie";
+
 let consultaAtual = null;
 
 function somenteDigitos(valor) {
-  return valor.replace(/\D/g, "");
+  return String(valor || "").replace(/\D/g, "");
 }
 
 function formatarCNPJ(valor) {
@@ -41,21 +43,28 @@ function validarCNPJ(cnpj) {
 
   const primeiro = digito(
     n.slice(0, 12),
-    [5,4,3,2,9,8,7,6,5,4,3,2]
+    [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
   );
 
   const segundo = digito(
     n.slice(0, 13),
-    [6,5,4,3,2,9,8,7,6,5,4,3,2]
+    [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
   );
 
-  return primeiro === Number(n[12]) &&
-         segundo === Number(n[13]);
+  return (
+    primeiro === Number(n[12]) &&
+    segundo === Number(n[13])
+  );
 }
 
 function preencher(id, valor) {
-  document.getElementById(id).textContent =
-    valor === null || valor === undefined ||
+  const elemento = document.getElementById(id);
+
+  if (!elemento) return;
+
+  elemento.textContent =
+    valor === null ||
+    valor === undefined ||
     String(valor).trim() === ""
       ? "Não informado"
       : String(valor);
@@ -64,6 +73,15 @@ function preencher(id, valor) {
 function mostrarMensagem(texto, cor = "#475569") {
   mensagem.textContent = texto;
   mensagem.style.color = cor;
+}
+
+function mostrarMensagemIE(texto, cor = "#475569") {
+  const elemento = document.getElementById("mensagem-ie");
+
+  if (!elemento) return;
+
+  elemento.textContent = texto;
+  elemento.style.color = cor;
 }
 
 function limparResultado() {
@@ -84,6 +102,23 @@ function cancelarConsulta() {
 
   pesquisar.disabled = false;
   pesquisar.textContent = "Pesquisar";
+}
+
+function formatarData(valor) {
+  if (!valor) return "Não informado";
+
+  const texto = String(valor);
+
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(texto)) {
+    return texto;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(texto)) {
+    const partes = texto.slice(0, 10).split("-");
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+  }
+
+  return texto;
 }
 
 function exibirDados(dados) {
@@ -134,16 +169,104 @@ function exibirDados(dados) {
   preencher("uf", dados.uf);
 
   const situacao = document.getElementById("situacao");
-  const status = (dados.descricao_situacao_cadastral || "")
-    .toUpperCase();
+  const status = String(
+    dados.descricao_situacao_cadastral || ""
+  ).toUpperCase();
 
-  situacao.style.color = status === "ATIVA"
-    ? "#15803d"
-    : status === "BAIXADA"
-      ? "#dc2626"
-      : "#b45309";
+  situacao.style.color =
+    status === "ATIVA"
+      ? "#15803d"
+      : status === "BAIXADA"
+        ? "#dc2626"
+        : "#b45309";
 
   resultado.hidden = false;
+}
+
+function exibirInscricaoEstadual(dados) {
+  const inscricoes = Array.isArray(dados.inscricoes_estaduais)
+    ? dados.inscricoes_estaduais
+    : [];
+
+  if (inscricoes.length === 0) {
+    mostrarMensagemIE(
+      "Nenhuma inscrição estadual encontrada na base consultada.",
+      "#b45309"
+    );
+    return;
+  }
+
+  const inscricao = inscricoes[0];
+
+  preencher("inscricao-estadual", inscricao.inscricao_estadual);
+  preencher("uf-ie", inscricao.uf);
+
+  const ativa = inscricao.ativo;
+
+  preencher(
+    "situacao-ie",
+    ativa === true
+      ? "Ativa"
+      : ativa === false
+        ? "Inativa"
+        : "Não informado"
+  );
+
+  preencher(
+    "atualizacao-ie",
+    formatarData(inscricao.atualizado_em)
+  );
+
+  const situacaoIE = document.getElementById("situacao-ie");
+
+  situacaoIE.style.color =
+    ativa === true
+      ? "#15803d"
+      : ativa === false
+        ? "#dc2626"
+        : "#475569";
+
+  mostrarMensagemIE(
+    inscricoes.length > 1
+      ? `Consulta realizada. Foram encontradas ${inscricoes.length} inscrições estaduais; exibindo a primeira.`
+      : "Inscrição Estadual consultada com sucesso!",
+    "#15803d"
+  );
+}
+
+async function consultarInscricaoEstadual(cnpj, controlador) {
+  mostrarMensagemIE("Consultando Inscrição Estadual...");
+
+  try {
+    const resposta = await fetch(
+      `${API_IE}?cnpj=${encodeURIComponent(cnpj)}`,
+      { signal: controlador.signal }
+    );
+
+    if (!resposta.ok) {
+      throw new Error(
+        `Não foi possível consultar a Inscrição Estadual (HTTP ${resposta.status}).`
+      );
+    }
+
+    const dados = await resposta.json();
+
+    if (consultaAtual !== controlador) return;
+
+    exibirInscricaoEstadual(dados);
+  } catch (erro) {
+    if (
+      erro.name !== "AbortError" &&
+      consultaAtual === controlador
+    ) {
+      mostrarMensagemIE(
+        erro instanceof TypeError
+          ? "Não foi possível conectar ao servidor de Inscrição Estadual."
+          : erro.message,
+        "#dc2626"
+      );
+    }
+  }
 }
 
 campo.addEventListener("input", () => {
@@ -169,6 +292,7 @@ pesquisar.addEventListener("click", async () => {
 
   pesquisar.disabled = true;
   pesquisar.textContent = "Consultando...";
+
   mostrarMensagem("Buscando informações cadastrais...");
 
   try {
@@ -179,14 +303,20 @@ pesquisar.addEventListener("click", async () => {
 
     if (!resposta.ok) {
       if (resposta.status === 404) {
-        throw new Error("CNPJ não encontrado na base consultada.");
+        throw new Error(
+          "CNPJ não encontrado na base consultada."
+        );
       }
 
       if (resposta.status === 429) {
-        throw new Error("Limite de consultas atingido. Tente novamente mais tarde.");
+        throw new Error(
+          "Limite de consultas atingido. Tente novamente mais tarde."
+        );
       }
 
-      throw new Error("Não foi possível consultar o CNPJ.");
+      throw new Error(
+        "Não foi possível consultar o CNPJ."
+      );
     }
 
     const dados = await resposta.json();
@@ -194,11 +324,18 @@ pesquisar.addEventListener("click", async () => {
     if (consultaAtual !== controlador) return;
 
     exibirDados(dados);
-    mostrarMensagem("Consulta realizada com sucesso!", "#15803d");
 
+    mostrarMensagem(
+      "Dados cadastrais consultados com sucesso!",
+      "#15803d"
+    );
+
+    await consultarInscricaoEstadual(cnpj, controlador);
   } catch (erro) {
-    if (erro.name !== "AbortError" &&
-        consultaAtual === controlador) {
+    if (
+      erro.name !== "AbortError" &&
+      consultaAtual === controlador
+    ) {
       mostrarMensagem(
         erro instanceof TypeError
           ? "Falha de conexão ou acesso à API. Tente novamente."
@@ -225,6 +362,10 @@ limpar.addEventListener("click", () => {
 
 campo.addEventListener("keydown", evento => {
   if (evento.key === "Enter") {
+    pesquisar.click();
+  }
+});
+
     pesquisar.click();
   }
 });
