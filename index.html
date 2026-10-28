@@ -137,48 +137,74 @@
 
       </div>
 
-      <!-- INSCRIÇÃO ESTADUAL -->
-      <h2>Inscrição Estadual (IE)</h2>
+      <!-- CONSULTA OPCIONAL DE IE -->
+      <section id="secao-ie">
 
-      <p
-        id="mensagem-ie"
-        role="status"
-        aria-live="polite"
-      >
-        Aguardando consulta da Inscrição Estadual...
-      </p>
+        <h2>Inscrição Estadual (IE)</h2>
 
-      <div class="dados">
+        <p>
+          A consulta da Inscrição Estadual é opcional.
+          Clique no botão abaixo para verificar as
+          informações disponíveis para este CNPJ.
+        </p>
 
-        <div>
-          <label>Número da Inscrição Estadual</label>
-          <p id="inscricao-estadual">
-            Não consultado
-          </p>
+        <button
+          id="pesquisar-ie"
+          type="button"
+        >
+          Consultar Inscrição Estadual (IE)
+        </button>
+
+        <p
+          id="mensagem-ie"
+          role="status"
+          aria-live="polite"
+        ></p>
+
+        <!-- RESULTADO DA IE -->
+        <div id="resultado-ie" hidden>
+
+          <h3>Inscrições estaduais encontradas</h3>
+
+          <div id="lista-ie">
+
+            <div class="dados">
+
+              <div>
+                <label>Número da Inscrição Estadual</label>
+                <p id="inscricao-estadual">
+                  Não consultado
+                </p>
+              </div>
+
+              <div>
+                <label>UF da Inscrição Estadual</label>
+                <p id="uf-ie">
+                  Não consultado
+                </p>
+              </div>
+
+              <div>
+                <label>Situação da Inscrição Estadual</label>
+                <p id="situacao-ie">
+                  Não consultado
+                </p>
+              </div>
+
+              <div>
+                <label>Última atualização</label>
+                <p id="atualizacao-ie">
+                  Não consultado
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+
         </div>
 
-        <div>
-          <label>UF da Inscrição Estadual</label>
-          <p id="uf-ie">
-            Não consultado
-          </p>
-        </div>
-
-        <div>
-          <label>Situação da Inscrição Estadual</label>
-          <p id="situacao-ie">
-            Não consultado
-          </p>
-        </div>
-
-        <div>
-          <label>Última atualização</label>
-          <p id="atualizacao-ie">
-            Não consultado
-          </p>
-        </div>
-
-      </div>
+      </section>
 
     </section>
 
